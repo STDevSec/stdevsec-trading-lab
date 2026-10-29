@@ -17,8 +17,15 @@ Formato OHLCV: `timestamp` (UTC, tz-aware), `open`, `high`, `low`, `close`,
 `volume`. Reglas de validez: ver `quant_engine.validation`. Los datos inválidos
 **no se reparan en silencio**.
 
-## Métricas (futuro)
+## Métricas y riesgo
 
-Cada métrica (win rate, profit factor, expectancy, max drawdown, Sharpe cuando
-sea estadísticamente apropiado, etc.) documentará su fórmula, supuestos y
-limitaciones antes de usarse.
+`quant_engine.analytics.compute_metrics(result)` calcula sobre un backtest:
+win rate, profit factor, expectancy, net profit, total return, max drawdown,
+avg win/avg loss, Sharpe (anualizado, risk-free 0), rachas consecutivas y
+retornos mensuales. Cada fórmula, supuesto y limitación está en
+[ADR-0006](../adr/0006-analytics-and-risk.md); las métricas indefinidas devuelven
+`None`, nunca un número engañoso.
+
+Riesgo: `position_size_from_risk` (sizing por riesgo por trade),
+`risk_reward_ratio`, y `run_backtest(max_drawdown_halt=...)` que liquida y queda
+flat al superar un drawdown. Límites diarios y multi-activo: pendientes (ADR-0006).
