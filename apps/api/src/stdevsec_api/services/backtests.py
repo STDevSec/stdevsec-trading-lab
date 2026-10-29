@@ -81,6 +81,22 @@ def list_runs(db: Session, *, limit: int, offset: int) -> tuple[list[BacktestRun
     return list(items), total
 
 
+def list_equity(db: Session, run_id: str) -> list[EquitySnapshot]:
+    """Full equity curve for a run, ordered by time.
+
+    Returned whole (not paginated): a chart needs the complete series. Bounded
+    by the dataset size cap (``max_candles``), so one point per bar stays sane.
+    """
+    get_run(db, run_id)  # 404 if the run does not exist
+    return list(
+        db.scalars(
+            select(EquitySnapshot)
+            .where(EquitySnapshot.run_id == run_id)
+            .order_by(EquitySnapshot.timestamp)
+        ).all()
+    )
+
+
 def list_trades(
     db: Session, run_id: str, *, limit: int, offset: int
 ) -> tuple[list[BacktestTrade], int]:

@@ -24,6 +24,9 @@ npm-debug.log*
 .env.*
 !.env.example
 
+# Local SQLite databases (dev/smoke-test only)
+*.db
+
 # Data artifacts (datasets are reproducible from seeds, not versioned)
 *.parquet
 *.csv

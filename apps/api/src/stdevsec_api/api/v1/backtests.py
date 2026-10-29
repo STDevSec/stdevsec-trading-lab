@@ -10,6 +10,7 @@ from stdevsec_api.db.session import get_db
 from stdevsec_api.schemas import (
     BacktestCreate,
     BacktestRunOut,
+    EquityPointOut,
     MetricsOut,
     Page,
     TradeOut,
@@ -53,6 +54,11 @@ def get_trades(
         limit=page.limit,
         offset=page.offset,
     )
+
+
+@router.get("/{run_id}/equity", response_model=list[EquityPointOut])
+def get_equity(run_id: str, db: Session = Depends(get_db)) -> list[EquityPointOut]:
+    return [EquityPointOut.model_validate(p) for p in svc.list_equity(db, run_id)]
 
 
 @router.get("/{run_id}/metrics", response_model=MetricsOut)

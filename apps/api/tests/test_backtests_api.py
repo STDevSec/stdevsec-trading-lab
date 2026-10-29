@@ -39,6 +39,17 @@ def test_run_backtest_end_to_end(client: TestClient) -> None:
     assert trades.status_code == 200
     assert "items" in trades.json()
 
+    equity = client.get(f"/api/v1/backtests/{run_id}/equity")
+    assert equity.status_code == 200
+    curve = equity.json()
+    assert len(curve) == 120  # one point per bar
+    assert curve[0]["timestamp"] < curve[-1]["timestamp"]  # ordered
+    assert all("equity" in p for p in curve)
+
+
+def test_equity_unknown_run_404(client: TestClient) -> None:
+    assert client.get("/api/v1/backtests/missing/equity").status_code == 404
+
 
 def test_sma_backtest_persists_trades(client: TestClient) -> None:
     dataset_id = _make_dataset(client, rows=200, seed=7)
