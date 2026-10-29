@@ -15,14 +15,20 @@ export default function EquityChart({ points }: { points: EquityPoint[] }) {
     const chart: IChartApi = createChart(container, {
       height: 320,
       autoSize: true,
-      layout: { background: { color: "transparent" }, textColor: "#888" },
+      layout: { background: { color: "transparent" }, textColor: "#7d8aa0" },
       grid: {
-        horzLines: { color: "rgba(128,128,128,0.1)" },
-        vertLines: { color: "rgba(128,128,128,0.1)" },
+        horzLines: { color: "rgba(35,44,64,0.6)" },
+        vertLines: { color: "rgba(35,44,64,0.6)" },
       },
-      timeScale: { timeVisible: false },
+      rightPriceScale: { borderColor: "#232c40" },
+      timeScale: { timeVisible: false, borderColor: "#232c40" },
+      crosshair: { vertLine: { color: "#4c8dff" }, horzLine: { color: "#4c8dff" } },
     });
-    const series = chart.addLineSeries({ color: "#2563eb", lineWidth: 2 });
+    const series = chart.addLineSeries({
+      color: "#4c8dff",
+      lineWidth: 2,
+      priceLineColor: "#4c8dff",
+    });
     series.setData(
       points.map((p) => ({
         time: Math.floor(Date.parse(p.timestamp) / 1000) as UTCTimestamp,
