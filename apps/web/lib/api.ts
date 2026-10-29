@@ -68,6 +68,17 @@ export type Run = z.infer<typeof RunSchema>;
 export const EquityPointSchema = z.object({ timestamp: z.string(), equity: z.number() });
 export type EquityPoint = z.infer<typeof EquityPointSchema>;
 
+export const TradeSchema = z.object({
+  entry_time: z.string(),
+  exit_time: z.string(),
+  units: z.number(),
+  entry_price: z.number(),
+  exit_price: z.number(),
+  pnl: z.number(),
+  return_pct: z.number(),
+});
+export type Trade = z.infer<typeof TradeSchema>;
+
 // --- Fetch helper -----------------------------------------------------------
 async function call<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -98,8 +109,12 @@ export const api = {
   listStrategies: () => call("/api/v1/strategies", z.array(StrategySchema)),
   runBacktest: (payload: unknown) =>
     call("/api/v1/backtests", RunSchema, { method: "POST", body: JSON.stringify(payload) }),
+  listBacktests: () => call("/api/v1/backtests?limit=100", page(RunSchema)),
+  getRun: (runId: string) => call(`/api/v1/backtests/${runId}`, RunSchema),
   equity: (runId: string) =>
     call(`/api/v1/backtests/${runId}/equity`, z.array(EquityPointSchema)),
+  trades: (runId: string) =>
+    call(`/api/v1/backtests/${runId}/trades?limit=200`, page(TradeSchema)),
 };
 
 /**
