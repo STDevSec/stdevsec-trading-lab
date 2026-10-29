@@ -1,0 +1,65 @@
+[project]
+name = "stdevsec-trading-lab"
+version = "0.1.0"
+description = "Open-source quantitative research, backtesting and trading-education platform (simulation only)."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "quant-engine",
+    "market-data",
+    "stdevsec-api",
+]
+
+[tool.uv]
+package = false  # root is an aggregator, not an installable package
+
+[tool.uv.workspace]
+members = ["apps/api", "packages/quant-engine", "packages/market-data"]
+
+[tool.uv.sources]
+quant-engine = { workspace = true }
+market-data = { workspace = true }
+stdevsec-api = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8",
+    "hypothesis>=6",
+    "pip-audit>=2.7",
+    "httpx>=0.27",      # FastAPI TestClient
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["apps/api/src", "packages/quant-engine/src", "packages/market-data/src"]
+
+[tool.ruff.lint]
+# E/F pycodestyle+pyflakes, I isort, B bugbear, UP pyupgrade, S bandit (security)
+select = ["E", "F", "I", "B", "UP", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]  # assert is expected in tests
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+packages = ["quant_engine", "market_data", "stdevsec_api"]
+
+# pandas / numpy / pyarrow ship incomplete stubs; don't fail strict on their Any.
+[[tool.mypy.overrides]]
+module = ["pandas.*", "numpy.*", "pyarrow.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = [
+    "apps/api/tests",
+    "packages/quant-engine/tests",
+    "packages/market-data/tests",
+    "tests",
+]

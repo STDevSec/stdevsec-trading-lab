@@ -1,0 +1,16 @@
+{
+  "name": "stdevsec-trading-lab",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Open-source quantitative research & trading-education platform (simulation only).",
+  "workspaces": [
+    "apps/web",
+    "packages/shared-contracts"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web"
+  }
+}

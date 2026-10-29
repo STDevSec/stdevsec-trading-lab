@@ -1,0 +1,21 @@
+[project]
+name = "quant-engine"
+version = "0.1.0"
+description = "Deterministic quantitative engine (OHLCV validation + synthetic data) for STDevsec Trading Lab."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+]
+
+[project.scripts]
+quant-synthetic = "quant_engine.synthetic:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/quant_engine"]

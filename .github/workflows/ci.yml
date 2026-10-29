@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python (lint, types, tests, audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Pin Python 3.12
+        run: uv python install 3.12
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Ruff (lint + security)
+        run: uv run ruff check .
+
+      - name: Mypy (strict types)
+        run: uv run mypy
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: Dependency audit
+        run: uv run pip-audit || true  # report-only until triage policy is defined
+
+  web:
+    name: Web (lint, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint --workspace apps/web
+
+      - name: Build
+        run: npm run build --workspace apps/web
+
+      - name: npm audit (high+)
+        run: npm audit --audit-level=high || true  # report-only in Sprint 01
