@@ -34,6 +34,11 @@ class DomainValidationError(APIError):
     code = "validation_error"
 
 
+class PayloadTooLargeError(APIError):
+    status_code = 413
+    code = "payload_too_large"
+
+
 def _envelope(code: str, message: str, details: Any = None) -> dict[str, Any]:
     body: dict[str, Any] = {"code": code, "message": message}
     if details is not None:

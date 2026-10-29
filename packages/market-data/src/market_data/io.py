@@ -10,6 +10,7 @@ Everything here assumes the file and its contents are **untrusted**:
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 import pandas as pd
@@ -68,11 +69,32 @@ def read_ohlcv_csv(
 
     # engine="c", no python eval, no index inference surprises.
     df = pd.read_csv(p)
+    return _normalize_timestamps(df, timestamp_column)
 
+
+def read_ohlcv_csv_bytes(
+    data: bytes,
+    *,
+    max_bytes: int = DEFAULT_MAX_BYTES,
+    timestamp_column: str = "timestamp",
+) -> pd.DataFrame:
+    """Parse an uploaded OHLCV CSV from in-memory bytes.
+
+    Same contract as :func:`read_ohlcv_csv` but for an upload that never touches
+    disk: the byte cap is checked before parsing. Does not validate data quality.
+    """
+    if len(data) > max_bytes:
+        raise DatasetTooLargeError(f"Upload is {len(data)} bytes, exceeds cap of {max_bytes}.")
+    df = pd.read_csv(io.BytesIO(data))
+    return _normalize_timestamps(df, timestamp_column)
+
+
+def _normalize_timestamps(df: pd.DataFrame, timestamp_column: str) -> pd.DataFrame:
+    """Parse the timestamp column to UTC in place (unparseable -> NaT)."""
     if timestamp_column in df.columns:
-        parsed = pd.to_datetime(df[timestamp_column], utc=True, errors="coerce", format="ISO8601")
-        df[timestamp_column] = parsed
-
+        df[timestamp_column] = pd.to_datetime(
+            df[timestamp_column], utc=True, errors="coerce", format="ISO8601"
+        )
     return df
 
 

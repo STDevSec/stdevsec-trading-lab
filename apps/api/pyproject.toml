@@ -7,6 +7,7 @@ license = { text = "Apache-2.0" }
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.115",
+    "python-multipart>=0.0.9",  # required by FastAPI for multipart/form-data (CSV upload)
     "uvicorn[standard]>=0.30",
     "pydantic>=2.8",
     "pydantic-settings>=2.4",

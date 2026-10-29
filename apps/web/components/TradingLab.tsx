@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   api,
+  candlesToCsv,
   syntheticCandles,
   type Dataset,
   type EquityPoint,
@@ -23,6 +24,8 @@ export default function TradingLab() {
   const [params, setParams] = useState<Record<string, number>>({});
   const [capital, setCapital] = useState(10000);
   const [commissionBps, setCommissionBps] = useState(0);
+  const [symbol, setSymbol] = useState("");
+  const [timeframe, setTimeframe] = useState("1d");
 
   const [run, setRun] = useState<Run | null>(null);
   const [equity, setEquity] = useState<EquityPoint[]>([]);
@@ -75,6 +78,35 @@ export default function TradingLab() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function uploadCsv(file: File) {
+    setBusy(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("name", file.name.replace(/\.csv$/i, "") || "CSV");
+      form.append("timeframe", timeframe.trim() || "1d");
+      if (symbol.trim()) form.append("symbol", symbol.trim());
+      const ds = await api.uploadCsv(form);
+      await refreshDatasets();
+      setDatasetId(ds.id);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function downloadSample() {
+    const blob = new Blob([candlesToCsv(syntheticCandles())], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ohlcv-ejemplo.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function launch() {
@@ -134,11 +166,56 @@ export default function TradingLab() {
           >
             {datasets.map((d) => (
               <option key={d.id} value={d.id}>
-                {d.name} · {d.timeframe}
+                {d.name}
+                {d.symbol ? ` · ${d.symbol}` : ""} · {d.timeframe}
               </option>
             ))}
           </select>
         )}
+
+        {/* Upload CSV de un instrumento real */}
+        <div className="mt-3 rounded border border-dashed p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm font-medium">o sube un CSV (instrumento real)</span>
+            <button onClick={downloadSample} className="text-xs text-blue-600 hover:underline">
+              descargar CSV de ejemplo
+            </button>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-sm">
+              <span className="block text-neutral-500">símbolo (opcional)</span>
+              <input
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="AAPL"
+                className="mt-1 w-28 rounded border bg-transparent p-1"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="block text-neutral-500">timeframe</span>
+              <input
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value)}
+                placeholder="1d"
+                className="mt-1 w-20 rounded border bg-transparent p-1"
+              />
+            </label>
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              disabled={busy}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void uploadCsv(f);
+                e.target.value = ""; // allow re-upload of the same file
+              }}
+              className="text-sm text-neutral-500 file:mr-2 file:rounded file:border file:bg-transparent file:px-2 file:py-1 file:text-sm"
+            />
+          </div>
+          <p className="mt-2 text-xs text-neutral-400">
+            Columnas: <code>timestamp,open,high,low,close,volume</code> · timestamp ISO-8601 UTC.
+          </p>
+        </div>
       </section>
 
       {/* Strategy + params */}

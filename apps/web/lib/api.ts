@@ -83,10 +83,18 @@ async function call<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): 
   return schema.parse(body);
 }
 
+async function upload(path: string, form: FormData): Promise<Dataset> {
+  const res = await fetch(`${BASE}${path}`, { method: "POST", body: form });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(body?.error?.message ?? `HTTP ${res.status}`);
+  return DatasetSchema.parse(body);
+}
+
 export const api = {
   listDatasets: () => call("/api/v1/datasets?limit=200", page(DatasetSchema)),
   createDataset: (payload: unknown) =>
     call("/api/v1/datasets", DatasetSchema, { method: "POST", body: JSON.stringify(payload) }),
+  uploadCsv: (form: FormData) => upload("/api/v1/datasets/upload", form),
   listStrategies: () => call("/api/v1/strategies", z.array(StrategySchema)),
   runBacktest: (payload: unknown) =>
     call("/api/v1/backtests", RunSchema, { method: "POST", body: JSON.stringify(payload) }),
@@ -123,4 +131,13 @@ export function syntheticCandles(rows = 180, seed = 42) {
     price = close;
   }
   return candles;
+}
+
+/** Serialize candles to an OHLCV CSV string (the upload format), for a sample download. */
+export function candlesToCsv(candles: ReturnType<typeof syntheticCandles>): string {
+  const head = "timestamp,open,high,low,close,volume";
+  const rows = candles.map(
+    (c) => `${c.timestamp},${c.open},${c.high},${c.low},${c.close},${c.volume}`,
+  );
+  return [head, ...rows].join("\n") + "\n";
 }

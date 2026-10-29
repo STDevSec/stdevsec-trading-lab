@@ -22,7 +22,8 @@ Sistema:
 Dominio (`/api/v1`):
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| POST | `/datasets` | Crea dataset (valida OHLCV y persiste v1) |
+| POST | `/datasets` | Crea dataset desde JSON (valida OHLCV y persiste v1) |
+| POST | `/datasets/upload` | Crea dataset desde un CSV subido (multipart) |
 | GET | `/datasets` | Lista paginada |
 | GET | `/datasets/{id}` | Detalle + versiones |
 | POST | `/datasets/{id}/validate` | Revalida la última versión |
@@ -31,6 +32,7 @@ Dominio (`/api/v1`):
 | GET | `/backtests` | Lista paginada de corridas |
 | GET | `/backtests/{id}` | Detalle de la corrida (incluye métricas) |
 | GET | `/backtests/{id}/trades` | Round-trips (paginado) |
+| GET | `/backtests/{id}/equity` | Curva de equity completa (serie ordenada) |
 | GET | `/backtests/{id}/metrics` | Métricas de desempeño |
 
 Errores con envelope único: `{"error": {"code", "message", "details"}}`.

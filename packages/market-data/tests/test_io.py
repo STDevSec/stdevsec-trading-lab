@@ -9,10 +9,24 @@ from market_data import (
     DatasetTooLargeError,
     neutralize_csv_value,
     read_ohlcv_csv,
+    read_ohlcv_csv_bytes,
     safe_resolve,
     write_ohlcv_csv,
 )
 from quant_engine import generate_ohlcv, validate_ohlcv
+
+
+def test_read_bytes_parses_and_validates() -> None:
+    header = "timestamp,open,high,low,close,volume\n"
+    row = "2024-01-01T00:00:00+00:00,100,101,99,100.5,1000\n"
+    df = read_ohlcv_csv_bytes((header + row).encode())
+    assert df["timestamp"].iloc[0].tzinfo is not None  # UTC-parsed
+    assert df["close"].iloc[0] == 100.5
+
+
+def test_read_bytes_size_cap() -> None:
+    with pytest.raises(DatasetTooLargeError):
+        read_ohlcv_csv_bytes(b"timestamp,open\n", max_bytes=3)
 
 
 def test_roundtrip_csv_stays_valid(tmp_path: Path) -> None:

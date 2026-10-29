@@ -7,11 +7,14 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from market_data import DatasetTooLargeError, read_ohlcv_csv_bytes
 from quant_engine import validate_ohlcv
+from stdevsec_api.config import get_settings
 from stdevsec_api.db.models import Dataset, DatasetVersion
-from stdevsec_api.errors import DomainValidationError, NotFoundError
+from stdevsec_api.errors import DomainValidationError, NotFoundError, PayloadTooLargeError
 from stdevsec_api.schemas import DatasetCreate
 from stdevsec_api.services.ohlcv import (
+    candles_from_df,
     candles_from_models,
     candles_to_df,
     candles_to_storage,
@@ -42,6 +45,34 @@ def create_dataset(db: Session, payload: DatasetCreate) -> Dataset:
     db.commit()
     db.refresh(dataset)
     return dataset
+
+
+def create_dataset_from_csv(
+    db: Session, *, name: str, symbol: str | None, timeframe: str, data: bytes
+) -> Dataset:
+    """Parse an uploaded OHLCV CSV, then validate + persist like a normal create.
+
+    Bytes are size-capped before parsing; parsing and quality validation reuse the
+    exact same path as a JSON dataset, so uploaded data gets the same guarantees.
+    """
+    settings = get_settings()
+    try:
+        df = read_ohlcv_csv_bytes(data, max_bytes=settings.max_upload_bytes)
+    except DatasetTooLargeError as exc:
+        raise PayloadTooLargeError(str(exc)) from exc
+
+    candles = candles_from_df(df)
+    if not candles:
+        raise DomainValidationError("CSV has no data rows")
+    if len(candles) > settings.max_candles:
+        raise DomainValidationError(
+            f"CSV has {len(candles)} rows, exceeds cap of {settings.max_candles}.",
+            details={"max_candles": settings.max_candles},
+        )
+
+    return create_dataset(
+        db, DatasetCreate(name=name, symbol=symbol, timeframe=timeframe, candles=candles)
+    )
 
 
 def list_datasets(db: Session, *, limit: int, offset: int) -> tuple[list[Dataset], int]:
