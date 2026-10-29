@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     port: int = 8000
     # CORS origins as a comma-separated string in the env; parsed to a list.
     cors_origins: str = "http://localhost:3000"
+    # SQLAlchemy URL. Defaults to local Postgres; tests override with SQLite.
+    database_url: str = "postgresql+psycopg://trading_lab:change_me_in_local_only@localhost:5432/trading_lab"
+    # Reject dataset uploads with more candles than this (resource exhaustion).
+    max_candles: int = 200_000
 
     @property
     def cors_origin_list(self) -> list[str]:

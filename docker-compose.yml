@@ -35,6 +35,7 @@ services:
     env_file: .env
     environment:
       API_HOST: 0.0.0.0
+      API_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-trading_lab}:${POSTGRES_PASSWORD:-change_me_in_local_only}@postgres:5432/${POSTGRES_DB:-trading_lab}
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     depends_on:

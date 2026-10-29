@@ -36,6 +36,7 @@ dev = [
 line-length = 100
 target-version = "py312"
 src = ["apps/api/src", "packages/quant-engine/src", "packages/market-data/src"]
+extend-exclude = ["**/migrations/**"]
 
 [tool.ruff.lint]
 # E/F pycodestyle+pyflakes, I isort, B bugbear, UP pyupgrade, S bandit (security)
@@ -43,6 +44,10 @@ select = ["E", "F", "I", "B", "UP", "S"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101"]  # assert is expected in tests
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection idiom requires these calls in argument defaults.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -17,7 +17,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from stdevsec_api import __version__
+from stdevsec_api.api.v1 import router as api_v1_router
 from stdevsec_api.config import get_settings
+from stdevsec_api.errors import register_error_handlers
 
 logging.basicConfig(
     level=logging.INFO,
@@ -85,6 +87,8 @@ def create_app() -> FastAPI:
         checks = {"quant_engine": "ok"}
         return ReadyResponse(status="ready", version=__version__, checks=checks)
 
+    register_error_handlers(app)
+    app.include_router(api_v1_router)
     return app
 
 
