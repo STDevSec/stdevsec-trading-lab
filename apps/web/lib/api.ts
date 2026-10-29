@@ -68,6 +68,21 @@ export type Run = z.infer<typeof RunSchema>;
 export const EquityPointSchema = z.object({ timestamp: z.string(), equity: z.number() });
 export type EquityPoint = z.infer<typeof EquityPointSchema>;
 
+export const OhlcvCandleSchema = z.object({
+  time: z.number(),
+  open: z.number(),
+  high: z.number(),
+  low: z.number(),
+  close: z.number(),
+  volume: z.number(),
+});
+export const OhlcvSchema = z.object({
+  candles: z.array(OhlcvCandleSchema),
+  indicators: z.record(z.array(z.number().nullable())),
+});
+export type Ohlcv = z.infer<typeof OhlcvSchema>;
+export type OhlcvCandle = z.infer<typeof OhlcvCandleSchema>;
+
 export const TradeSchema = z.object({
   entry_time: z.string(),
   exit_time: z.string(),
@@ -106,6 +121,7 @@ export const api = {
   createDataset: (payload: unknown) =>
     call("/api/v1/datasets", DatasetSchema, { method: "POST", body: JSON.stringify(payload) }),
   uploadCsv: (form: FormData) => upload("/api/v1/datasets/upload", form),
+  ohlcv: (datasetId: string) => call(`/api/v1/datasets/${datasetId}/ohlcv`, OhlcvSchema),
   listStrategies: () => call("/api/v1/strategies", z.array(StrategySchema)),
   runBacktest: (payload: unknown) =>
     call("/api/v1/backtests", RunSchema, { method: "POST", body: JSON.stringify(payload) }),

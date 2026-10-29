@@ -27,6 +27,7 @@ Dominio (`/api/v1`):
 | GET | `/datasets` | Lista paginada |
 | GET | `/datasets/{id}` | Detalle + versiones |
 | POST | `/datasets/{id}/validate` | Revalida la última versión |
+| GET | `/datasets/{id}/ohlcv` | Velas + indicadores (SMA/EMA/Bollinger/RSI/MACD) |
 | GET | `/strategies` | Catálogo de estrategias built-in |
 | POST | `/backtests` | Corre un backtest y persiste run + trades + equity |
 | GET | `/backtests` | Lista paginada de corridas |

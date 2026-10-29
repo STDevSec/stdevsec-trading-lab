@@ -53,3 +53,19 @@ def test_missing_dataset_returns_404(client: TestClient) -> None:
     r = client.get("/api/v1/datasets/does-not-exist")
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "not_found"
+
+
+def test_ohlcv_with_indicators(client: TestClient) -> None:
+    dataset_id = client.post("/api/v1/datasets", json=dataset_payload(rows=60)).json()["id"]
+    r = client.get(f"/api/v1/datasets/{dataset_id}/ohlcv")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["candles"]) == 60
+    assert body["candles"][0]["time"] < body["candles"][-1]["time"]  # unix seconds, ordered
+    ind = body["indicators"]
+    for key in ("sma20", "ema20", "bb_upper", "rsi14", "macd", "macd_hist"):
+        assert len(ind[key]) == 60  # index-aligned with candles
+    assert ind["sma20"][0] is None  # warm-up serialized as null, not NaN
+    # RSI stays within bounds where defined.
+    rsi_vals = [v for v in ind["rsi14"] if v is not None]
+    assert rsi_vals and all(0 <= v <= 100 for v in rsi_vals)

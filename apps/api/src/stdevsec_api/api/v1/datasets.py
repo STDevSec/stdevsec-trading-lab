@@ -11,10 +11,12 @@ from stdevsec_api.schemas import (
     DatasetCreate,
     DatasetDetailOut,
     DatasetOut,
+    OhlcvOut,
     Page,
     ValidationReportOut,
 )
 from stdevsec_api.services import datasets as svc
+from stdevsec_api.services import indicators as ind_svc
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
@@ -63,3 +65,9 @@ def get_dataset(dataset_id: str, db: Session = Depends(get_db)) -> DatasetDetail
 @router.post("/{dataset_id}/validate", response_model=ValidationReportOut)
 def validate_dataset(dataset_id: str, db: Session = Depends(get_db)) -> ValidationReportOut:
     return ValidationReportOut.model_validate(svc.revalidate_latest(db, dataset_id))
+
+
+@router.get("/{dataset_id}/ohlcv", response_model=OhlcvOut)
+def get_ohlcv(dataset_id: str, db: Session = Depends(get_db)) -> OhlcvOut:
+    """Candles + a fixed bundle of indicators (SMA/EMA/Bollinger/RSI/MACD)."""
+    return OhlcvOut.model_validate(ind_svc.ohlcv_with_indicators(db, dataset_id))
