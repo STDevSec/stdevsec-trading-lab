@@ -35,5 +35,11 @@ Dominio (`/api/v1`):
 | GET | `/backtests/{id}/trades` | Round-trips (paginado) |
 | GET | `/backtests/{id}/equity` | Curva de equity completa (serie ordenada) |
 | GET | `/backtests/{id}/metrics` | Métricas de desempeño |
+| POST | `/journal/entries` | Crea entrada del diario (título, notas, tags) |
+| GET | `/journal/entries` | Lista paginada de entradas |
+| GET | `/journal/entries/{id}` | Detalle + capturas adjuntas |
+| DELETE | `/journal/entries/{id}` | Elimina la entrada (y sus capturas) |
+| POST | `/journal/entries/{id}/images` | Adjunta una captura (multipart, solo imágenes) |
+| GET | `/journal/entries/{id}/images/{img}` | Sirve los bytes de la captura |
 
 Errores con envelope único: `{"error": {"code", "message", "details"}}`.

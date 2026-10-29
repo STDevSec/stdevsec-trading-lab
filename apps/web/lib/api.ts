@@ -94,6 +94,27 @@ export const TradeSchema = z.object({
 });
 export type Trade = z.infer<typeof TradeSchema>;
 
+export const JournalImageSchema = z.object({
+  id: z.string(),
+  filename: z.string(),
+  content_type: z.string(),
+  created_at: z.string(),
+});
+export const JournalEntrySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  notes: z.string(),
+  tags: z.array(z.string()),
+  run_id: z.string().nullable(),
+  created_at: z.string(),
+});
+export const JournalDetailSchema = JournalEntrySchema.extend({
+  images: z.array(JournalImageSchema),
+});
+export type JournalEntry = z.infer<typeof JournalEntrySchema>;
+export type JournalDetail = z.infer<typeof JournalDetailSchema>;
+export type JournalImage = z.infer<typeof JournalImageSchema>;
+
 // --- Fetch helper -----------------------------------------------------------
 async function call<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -109,18 +130,18 @@ async function call<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): 
   return schema.parse(body);
 }
 
-async function upload(path: string, form: FormData): Promise<Dataset> {
+async function upload<T>(path: string, form: FormData, schema: z.ZodType<T>): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { method: "POST", body: form });
   const body = await res.json().catch(() => null);
   if (!res.ok) throw new Error(body?.error?.message ?? `HTTP ${res.status}`);
-  return DatasetSchema.parse(body);
+  return schema.parse(body);
 }
 
 export const api = {
   listDatasets: () => call("/api/v1/datasets?limit=200", page(DatasetSchema)),
   createDataset: (payload: unknown) =>
     call("/api/v1/datasets", DatasetSchema, { method: "POST", body: JSON.stringify(payload) }),
-  uploadCsv: (form: FormData) => upload("/api/v1/datasets/upload", form),
+  uploadCsv: (form: FormData) => upload("/api/v1/datasets/upload", form, DatasetSchema),
   ohlcv: (datasetId: string) => call(`/api/v1/datasets/${datasetId}/ohlcv`, OhlcvSchema),
   listStrategies: () => call("/api/v1/strategies", z.array(StrategySchema)),
   runBacktest: (payload: unknown) =>
@@ -131,6 +152,24 @@ export const api = {
     call(`/api/v1/backtests/${runId}/equity`, z.array(EquityPointSchema)),
   trades: (runId: string) =>
     call(`/api/v1/backtests/${runId}/trades?limit=200`, page(TradeSchema)),
+
+  // Journal
+  listJournal: () => call("/api/v1/journal/entries?limit=100", page(JournalEntrySchema)),
+  getJournalEntry: (id: string) =>
+    call(`/api/v1/journal/entries/${id}`, JournalDetailSchema),
+  createJournalEntry: (payload: unknown) =>
+    call("/api/v1/journal/entries", JournalEntrySchema, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  uploadJournalImage: (entryId: string, form: FormData) =>
+    upload(`/api/v1/journal/entries/${entryId}/images`, form, JournalImageSchema),
+  deleteJournalEntry: async (id: string) => {
+    const res = await fetch(`${BASE}/api/v1/journal/entries/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  },
+  journalImageUrl: (entryId: string, imageId: string) =>
+    `${BASE}/api/v1/journal/entries/${entryId}/images/${imageId}`,
 };
 
 /**

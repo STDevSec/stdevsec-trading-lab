@@ -17,7 +17,9 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -125,3 +127,49 @@ class EquitySnapshot(Base):
     equity: Mapped[float] = mapped_column(Float)
 
     run: Mapped["BacktestRun"] = relationship(back_populates="equity_snapshots")
+
+
+class JournalEntry(Base):
+    """A trading-journal note: free text + tags + optional screenshots.
+
+    May reference a backtest run; if that run is deleted the link is cleared
+    (SET NULL) so the note survives.
+    """
+
+    __tablename__ = "journal_entries"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    title: Mapped[str] = mapped_column(String(200))
+    notes: Mapped[str] = mapped_column(Text, default="")
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    run_id: Mapped[str | None] = mapped_column(
+        ForeignKey("backtest_runs.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    images: Mapped[list["JournalImage"]] = relationship(
+        back_populates="entry",
+        cascade="all, delete-orphan",
+        order_by="JournalImage.created_at",
+    )
+
+
+class JournalImage(Base):
+    """A screenshot attached to a journal entry (bytes stored in the DB).
+
+    ponytail: DB blob, capped per-image; move to object storage if the journal
+    grows large.
+    """
+
+    __tablename__ = "journal_images"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    entry_id: Mapped[str] = mapped_column(
+        ForeignKey("journal_entries.id", ondelete="CASCADE"), index=True
+    )
+    filename: Mapped[str] = mapped_column(String(255))
+    content_type: Mapped[str] = mapped_column(String(100))
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    entry: Mapped["JournalEntry"] = relationship(back_populates="images")

@@ -166,3 +166,35 @@ class BacktestRunOut(BaseModel):
     total_return: float
     metrics: dict[str, Any]
     created_at: datetime
+
+
+# --- Journal ----------------------------------------------------------------
+class JournalEntryCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    notes: str = Field(default="", max_length=20_000)
+    tags: list[str] = Field(default_factory=list)
+    run_id: str | None = None
+
+
+class JournalImageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    filename: str
+    content_type: str
+    created_at: datetime
+
+
+class JournalEntryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    title: str
+    notes: str
+    tags: list[str]
+    run_id: str | None
+    created_at: datetime
+
+
+class JournalEntryDetailOut(JournalEntryOut):
+    images: list[JournalImageOut]

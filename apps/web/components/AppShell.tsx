@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-export type ViewId = "backtest" | "runs";
+export type ViewId = "backtest" | "runs" | "journal";
 
 type NavItem = { id: ViewId; label: string; icon: ReactNode };
 type SoonItem = { label: string; icon: ReactNode };
@@ -34,15 +34,14 @@ const icon = (path: ReactNode) => (
 const NAV: NavItem[] = [
   { id: "backtest", label: "Backtest", icon: icon(I.flask) },
   { id: "runs", label: "Corridas", icon: icon(I.list) },
+  { id: "journal", label: "Diario", icon: icon(I.book) },
 ];
-const SOON: SoonItem[] = [
-  { label: "Diario", icon: icon(I.book) },
-  { label: "Paper trading", icon: icon(I.activity) },
-];
+const SOON: SoonItem[] = [{ label: "Paper trading", icon: icon(I.activity) }];
 
 const TITLES: Record<ViewId, string> = {
   backtest: "Nuevo backtest",
   runs: "Corridas",
+  journal: "Diario de trading",
 };
 
 export default function AppShell({
