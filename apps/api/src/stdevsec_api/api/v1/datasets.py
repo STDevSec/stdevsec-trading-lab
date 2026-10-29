@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from sqlalchemy.orm import Session
 
 from stdevsec_api.api.v1.deps import Pagination, pagination
@@ -22,6 +22,24 @@ router = APIRouter(prefix="/datasets", tags=["datasets"])
 @router.post("", response_model=DatasetOut, status_code=status.HTTP_201_CREATED)
 def create_dataset(payload: DatasetCreate, db: Session = Depends(get_db)) -> DatasetOut:
     return DatasetOut.model_validate(svc.create_dataset(db, payload))
+
+
+@router.post("/upload", response_model=DatasetOut, status_code=status.HTTP_201_CREATED)
+async def upload_dataset(
+    file: UploadFile = File(...),
+    name: str = Form(...),
+    timeframe: str = Form(...),
+    symbol: str | None = Form(None),
+    db: Session = Depends(get_db),
+) -> DatasetOut:
+    """Create a dataset from an uploaded OHLCV CSV.
+
+    CSV columns: timestamp, open, high, low, close, volume.
+    """
+    data = await file.read()
+    return DatasetOut.model_validate(
+        svc.create_dataset_from_csv(db, name=name, symbol=symbol, timeframe=timeframe, data=data)
+    )
 
 
 @router.get("", response_model=Page[DatasetOut])

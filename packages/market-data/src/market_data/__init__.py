@@ -5,6 +5,7 @@ from market_data.io import (
     DatasetTooLargeError,
     neutralize_csv_value,
     read_ohlcv_csv,
+    read_ohlcv_csv_bytes,
     safe_resolve,
     write_ohlcv_csv,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "DatasetTooLargeError",
     "neutralize_csv_value",
     "read_ohlcv_csv",
+    "read_ohlcv_csv_bytes",
     "safe_resolve",
     "write_ohlcv_csv",
 ]

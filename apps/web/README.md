@@ -19,6 +19,9 @@ La home (`app/page.tsx`) monta `TradingLab`:
 
 1. **Dataset** — lista los datasets del API; botón *Generar dataset de ejemplo*
    crea uno sintético (GBM determinista, en el navegador) vía `POST /datasets`.
+   También puedes **subir un CSV** (`timestamp,open,high,low,close,volume`) de un
+   instrumento real vía `POST /datasets/upload`; hay un *descargar CSV de ejemplo*
+   con el formato exacto.
 2. **Estrategia** — catálogo desde `GET /strategies`; los parámetros se renderizan
    dinámicamente según el catálogo.
 3. **Backtest** — `POST /backtests`; muestra métricas + curva de equity

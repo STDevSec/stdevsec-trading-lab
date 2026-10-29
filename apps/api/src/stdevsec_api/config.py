@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://trading_lab:change_me_in_local_only@localhost:5432/trading_lab"
     # Reject dataset uploads with more candles than this (resource exhaustion).
     max_candles: int = 200_000
+    # Cap raw CSV upload size in bytes before parsing (resource exhaustion). 50 MiB.
+    max_upload_bytes: int = 50 * 1024 * 1024
 
     @property
     def cors_origin_list(self) -> list[str]:
