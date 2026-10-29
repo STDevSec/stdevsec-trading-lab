@@ -14,6 +14,7 @@ from quant_engine.backtest import (
     backtest_strategy,
     run_backtest,
 )
+from quant_engine.indicators import bollinger, ema, macd, rsi, sma
 from quant_engine.risk import position_size_from_risk, risk_reward_ratio
 from quant_engine.strategy import BuyAndHold, SMACrossover, Strategy
 from quant_engine.synthetic import generate_ohlcv
@@ -40,14 +41,19 @@ __all__ = [
     "Trade",
     "ValidationReport",
     "backtest_strategy",
+    "bollinger",
     "compute_metrics",
+    "ema",
     "generate_ohlcv",
+    "macd",
     "max_drawdown",
     "monthly_returns",
     "position_size_from_risk",
     "risk_reward_ratio",
+    "rsi",
     "run_backtest",
     "sharpe_ratio",
+    "sma",
     "validate_ohlcv",
 ]
 

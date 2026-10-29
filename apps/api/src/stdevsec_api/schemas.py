@@ -71,6 +71,26 @@ class DatasetDetailOut(DatasetOut):
     versions: list[DatasetVersionOut]
 
 
+class OhlcvCandle(BaseModel):
+    time: int  # unix seconds (UTC), for lightweight-charts
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+
+
+class OhlcvOut(BaseModel):
+    """A dataset's candles plus a fixed bundle of technical indicators.
+
+    Each indicator series is index-aligned with ``candles``; warm-up / undefined
+    points are ``null`` (NaN is never serialized).
+    """
+
+    candles: list[OhlcvCandle]
+    indicators: dict[str, list[float | None]]
+
+
 # --- Strategies -------------------------------------------------------------
 class StrategyParam(BaseModel):
     name: str

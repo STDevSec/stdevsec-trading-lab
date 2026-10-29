@@ -8,12 +8,14 @@ import {
   type Dataset,
   type EquityPoint,
   type Metrics,
+  type Ohlcv,
   type Run,
   type Strategy,
   type Trade,
 } from "@/lib/api";
 import AppShell, { type ViewId } from "@/components/AppShell";
 import EquityChart from "@/components/EquityChart";
+import PriceChart from "@/components/PriceChart";
 import RunsView from "@/components/RunsView";
 import TradesTable from "@/components/TradesTable";
 
@@ -36,6 +38,7 @@ export default function TradingLab() {
   const [symbol, setSymbol] = useState("");
   const [timeframe, setTimeframe] = useState("1d");
 
+  const [ohlcv, setOhlcv] = useState<Ohlcv | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [equity, setEquity] = useState<EquityPoint[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -53,6 +56,23 @@ export default function TradingLab() {
       .catch((e) => setError(String(e)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Load the price chart (candles + indicators) for the selected dataset.
+  useEffect(() => {
+    if (!datasetId) {
+      setOhlcv(null);
+      return;
+    }
+    let active = true;
+    setOhlcv(null);
+    api
+      .ohlcv(datasetId)
+      .then((o) => active && setOhlcv(o))
+      .catch((e) => setError(String(e)));
+    return () => {
+      active = false;
+    };
+  }, [datasetId]);
 
   async function refreshDatasets() {
     try {
@@ -256,6 +276,14 @@ export default function TradingLab() {
               </p>
             </div>
           </section>
+
+          {/* Gráfico del instrumento + indicadores */}
+          {ohlcv && ohlcv.candles.length > 0 && (
+            <section className="rounded-xl border border-border bg-surface p-5">
+              <h2 className="mb-4 text-sm font-semibold">Gráfico e indicadores</h2>
+              <PriceChart data={ohlcv} />
+            </section>
+          )}
 
           {/* Estrategia */}
           <section className="rounded-xl border border-border bg-surface p-5">
