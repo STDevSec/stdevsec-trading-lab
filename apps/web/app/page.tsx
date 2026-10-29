@@ -1,4 +1,4 @@
-import OhlcvChart from "@/components/OhlcvChart";
+import TradingLab from "@/components/TradingLab";
 
 export default function Home() {
   return (
@@ -10,8 +10,7 @@ export default function Home() {
       </p>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-medium">Dataset sintético (OHLCV)</h2>
-        <OhlcvChart />
+        <TradingLab />
       </section>
     </main>
   );
