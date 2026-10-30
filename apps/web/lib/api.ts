@@ -115,6 +115,34 @@ export type JournalEntry = z.infer<typeof JournalEntrySchema>;
 export type JournalDetail = z.infer<typeof JournalDetailSchema>;
 export type JournalImage = z.infer<typeof JournalImageSchema>;
 
+export const PaperPositionSchema = z.object({
+  symbol: z.string(),
+  qty: z.number(),
+  avg_price: z.number(),
+});
+export const PaperAccountSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  cash: z.number(),
+  created_at: z.string(),
+});
+export const PaperAccountDetailSchema = PaperAccountSchema.extend({
+  positions: z.array(PaperPositionSchema),
+});
+export const PaperOrderSchema = z.object({
+  id: z.string(),
+  symbol: z.string(),
+  side: z.string(),
+  qty: z.number(),
+  price: z.number(),
+  created_at: z.string(),
+});
+export const PriceSchema = z.object({ symbol: z.string(), price: z.number() });
+export type PaperAccount = z.infer<typeof PaperAccountSchema>;
+export type PaperAccountDetail = z.infer<typeof PaperAccountDetailSchema>;
+export type PaperPosition = z.infer<typeof PaperPositionSchema>;
+export type PaperOrder = z.infer<typeof PaperOrderSchema>;
+
 // --- Fetch helper -----------------------------------------------------------
 async function call<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -170,6 +198,25 @@ export const api = {
   },
   journalImageUrl: (entryId: string, imageId: string) =>
     `${BASE}/api/v1/journal/entries/${entryId}/images/${imageId}`,
+
+  // Paper trading
+  listPaperAccounts: () => call("/api/v1/paper/accounts?limit=100", page(PaperAccountSchema)),
+  createPaperAccount: (payload: unknown) =>
+    call("/api/v1/paper/accounts", PaperAccountSchema, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  getPaperAccount: (id: string) =>
+    call(`/api/v1/paper/accounts/${id}`, PaperAccountDetailSchema),
+  placePaperOrder: (accountId: string, payload: unknown) =>
+    call(`/api/v1/paper/accounts/${accountId}/orders`, PaperOrderSchema, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  listPaperOrders: (accountId: string) =>
+    call(`/api/v1/paper/accounts/${accountId}/orders?limit=100`, page(PaperOrderSchema)),
+  paperPrice: (symbol: string) =>
+    call(`/api/v1/paper/price?symbol=${encodeURIComponent(symbol)}`, PriceSchema),
 };
 
 /**

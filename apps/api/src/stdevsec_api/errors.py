@@ -39,6 +39,11 @@ class PayloadTooLargeError(APIError):
     code = "payload_too_large"
 
 
+class UpstreamError(APIError):
+    status_code = 502
+    code = "upstream_error"
+
+
 def _envelope(code: str, message: str, details: Any = None) -> dict[str, Any]:
     body: dict[str, Any] = {"code": code, "message": message}
     if details is not None:

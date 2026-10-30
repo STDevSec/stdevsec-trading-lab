@@ -41,5 +41,11 @@ Dominio (`/api/v1`):
 | DELETE | `/journal/entries/{id}` | Elimina la entrada (y sus capturas) |
 | POST | `/journal/entries/{id}/images` | Adjunta una captura (multipart, solo imágenes) |
 | GET | `/journal/entries/{id}/images/{img}` | Sirve los bytes de la captura |
+| GET | `/paper/price?symbol=` | Precio spot en vivo (Binance, sin API key) |
+| POST | `/paper/accounts` | Crea cuenta de paper trading (simulada) |
+| GET | `/paper/accounts` | Lista de cuentas |
+| GET | `/paper/accounts/{id}` | Detalle (efectivo + posiciones) |
+| POST | `/paper/accounts/{id}/orders` | Ejecuta orden simulada (buy/sell al precio dado) |
+| GET | `/paper/accounts/{id}/orders` | Historial de órdenes |
 
 Errores con envelope único: `{"error": {"code", "message", "details"}}`.

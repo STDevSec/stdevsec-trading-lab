@@ -173,3 +173,56 @@ class JournalImage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     entry: Mapped["JournalEntry"] = relationship(back_populates="images")
+
+
+class PaperAccount(Base):
+    """A simulated trading account: cash + long-only positions. No real money."""
+
+    __tablename__ = "paper_accounts"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(120))
+    cash: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    positions: Mapped[list["PaperPosition"]] = relationship(
+        back_populates="account", cascade="all, delete-orphan", order_by="PaperPosition.symbol"
+    )
+    orders: Mapped[list["PaperOrder"]] = relationship(
+        back_populates="account", cascade="all, delete-orphan"
+    )
+
+
+class PaperPosition(Base):
+    """Net long position per symbol (no shorting / leverage in the MVP)."""
+
+    __tablename__ = "paper_positions"
+    __table_args__ = (UniqueConstraint("account_id", "symbol", name="uq_paper_position"),)
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    account_id: Mapped[str] = mapped_column(
+        ForeignKey("paper_accounts.id", ondelete="CASCADE"), index=True
+    )
+    symbol: Mapped[str] = mapped_column(String(20))
+    qty: Mapped[float] = mapped_column(Float)
+    avg_price: Mapped[float] = mapped_column(Float)
+
+    account: Mapped["PaperAccount"] = relationship(back_populates="positions")
+
+
+class PaperOrder(Base):
+    """An executed simulated order (market fill at the provided price)."""
+
+    __tablename__ = "paper_orders"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    account_id: Mapped[str] = mapped_column(
+        ForeignKey("paper_accounts.id", ondelete="CASCADE"), index=True
+    )
+    symbol: Mapped[str] = mapped_column(String(20))
+    side: Mapped[str] = mapped_column(String(4))  # "buy" | "sell"
+    qty: Mapped[float] = mapped_column(Float)
+    price: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    account: Mapped["PaperAccount"] = relationship(back_populates="orders")

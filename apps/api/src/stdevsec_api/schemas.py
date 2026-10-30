@@ -198,3 +198,53 @@ class JournalEntryOut(BaseModel):
 
 class JournalEntryDetailOut(JournalEntryOut):
     images: list[JournalImageOut]
+
+
+# --- Paper trading ----------------------------------------------------------
+class PaperAccountCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    initial_cash: float = Field(default=10_000.0, gt=0)
+
+
+class PaperPositionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    symbol: str
+    qty: float
+    avg_price: float
+
+
+class PaperAccountOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    name: str
+    cash: float
+    created_at: datetime
+
+
+class PaperAccountDetailOut(PaperAccountOut):
+    positions: list[PaperPositionOut]
+
+
+class PaperOrderCreate(BaseModel):
+    symbol: str = Field(min_length=2, max_length=20)
+    side: str = Field(pattern="^(buy|sell)$")
+    qty: float = Field(gt=0)
+    price: float = Field(gt=0)
+
+
+class PaperOrderOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    symbol: str
+    side: str
+    qty: float
+    price: float
+    created_at: datetime
+
+
+class PriceOut(BaseModel):
+    symbol: str
+    price: float
