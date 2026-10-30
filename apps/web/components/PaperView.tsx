@@ -26,6 +26,7 @@ export default function PaperView() {
   const [newCash, setNewCash] = useState(10000);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     api
@@ -139,7 +140,7 @@ export default function PaperView() {
   const equity = (detail?.cash ?? 0) + positionsValue;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
+    <div className="space-y-4">
       {error && <p className="rounded border border-neg/40 bg-neg/10 p-3 text-sm text-neg">{error}</p>}
 
       {/* Account summary */}
@@ -150,126 +151,169 @@ export default function PaperView() {
         <Stat label="Posiciones" value={String(detail?.positions.length ?? 0)} />
       </section>
 
-      {/* Live chart */}
-      <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="mb-3 text-sm font-semibold">{symbol} · en vivo</h2>
-        <LiveChart symbol={symbol} livePrice={livePrice} />
-      </section>
+      {/* Terminal: big chart + trade panel on the right */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        <section className="rounded-xl border border-border bg-surface p-5">
+          <h2 className="mb-3 text-sm font-semibold">{symbol} · en vivo</h2>
+          <LiveChart symbol={symbol} livePrice={livePrice} height={480} />
+        </section>
 
-      {/* Trade panel */}
-      <section className="rounded-xl border border-border bg-surface p-5">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-sm font-semibold">Operar (simulado)</h2>
-          <span className="text-xs text-muted">
-            {symbol}:{" "}
-            <span className="nums text-fg">{livePrice ? `$${money(livePrice)}` : "…"}</span>
-            <span className="ml-1 text-pos">●</span> en vivo
-          </span>
-        </div>
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="text-xs text-muted">
-            símbolo
-            <select value={symbol} onChange={(e) => setSymbol(e.target.value)} className={`${INPUT} mt-1 block`}>
-              {SYMBOLS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs text-muted">
-            cantidad
-            <input type="number" step="0.001" value={qty} onChange={(e) => setQty(Number(e.target.value))} className={`${INPUT} nums mt-1 block w-32`} />
-          </label>
-          <div className="text-xs text-muted">
-            ≈ costo
-            <div className="nums mt-1 text-sm text-fg">{livePrice ? `$${money(qty * livePrice)}` : "—"}</div>
+        <section className="rounded-xl border border-border bg-surface p-5">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">Operar (simulado)</h2>
+            <span className="text-xs text-muted">
+              <span className="text-pos">●</span> en vivo
+            </span>
           </div>
-          <button onClick={() => order("buy")} disabled={busy || !livePrice} className="rounded-lg bg-pos/90 px-4 py-2 text-sm font-medium text-white hover:bg-pos disabled:opacity-50">
-            Comprar
-          </button>
-          <button onClick={() => order("sell")} disabled={busy || !livePrice} className="rounded-lg bg-neg/90 px-4 py-2 text-sm font-medium text-white hover:bg-neg disabled:opacity-50">
-            Vender
-          </button>
-        </div>
-      </section>
+          <div className="space-y-3">
+            <label className="block text-xs text-muted">
+              símbolo
+              <select value={symbol} onChange={(e) => setSymbol(e.target.value)} className={`${INPUT} mt-1 block w-full`}>
+                {SYMBOLS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+            <div className="flex items-baseline justify-between text-xs text-muted">
+              <span>precio</span>
+              <span className="nums text-sm text-fg">{livePrice ? `$${money(livePrice)}` : "…"}</span>
+            </div>
+            <label className="block text-xs text-muted">
+              cantidad
+              <input type="number" step="0.001" value={qty} onChange={(e) => setQty(Number(e.target.value))} className={`${INPUT} nums mt-1 block w-full`} />
+            </label>
+            <div className="flex items-baseline justify-between text-xs text-muted">
+              <span>≈ costo</span>
+              <span className="nums text-sm text-fg">{livePrice ? `$${money(qty * livePrice)}` : "—"}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button onClick={() => order("buy")} disabled={busy || !livePrice} className="rounded-lg bg-pos/90 px-4 py-2.5 text-sm font-medium text-white hover:bg-pos disabled:opacity-50">
+                Comprar
+              </button>
+              <button onClick={() => order("sell")} disabled={busy || !livePrice} className="rounded-lg bg-neg/90 px-4 py-2.5 text-sm font-medium text-white hover:bg-neg disabled:opacity-50">
+                Vender
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
 
-      {/* Positions */}
-      <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="mb-3 text-sm font-semibold">Posiciones</h2>
-        {!detail || detail.positions.length === 0 ? (
-          <p className="text-sm text-muted">Sin posiciones abiertas.</p>
-        ) : (
-          <div className="overflow-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-surface-2 text-[11px] uppercase tracking-wide text-muted">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium">Símbolo</th>
-                  <th className="px-3 py-2 text-right font-medium">Cantidad</th>
-                  <th className="px-3 py-2 text-right font-medium">Precio prom.</th>
-                  <th className="px-3 py-2 text-right font-medium">Actual</th>
-                  <th className="px-3 py-2 text-right font-medium">Valor</th>
-                  <th className="px-3 py-2 text-right font-medium">P&amp;L no real.</th>
-                </tr>
-              </thead>
-              <tbody className="nums">
-                {detail.positions.map((p) => {
-                  const cur = prices[p.symbol];
-                  const pnl = cur ? p.qty * (cur - p.avg_price) : null;
-                  return (
-                    <tr key={p.symbol} className="border-t border-border">
-                      <td className="px-3 py-1.5 text-left">{p.symbol}</td>
-                      <td className="px-3 py-1.5 text-right">{p.qty}</td>
-                      <td className="px-3 py-1.5 text-right">${money(p.avg_price)}</td>
-                      <td className="px-3 py-1.5 text-right">{cur ? `$${money(cur)}` : "…"}</td>
-                      <td className="px-3 py-1.5 text-right">${money(p.qty * (cur ?? p.avg_price))}</td>
-                      <td className={`px-3 py-1.5 text-right ${pnl === null ? "text-muted" : pnl >= 0 ? "text-pos" : "text-neg"}`}>
-                        {pnl === null ? "—" : `${pnl >= 0 ? "+" : ""}$${money(pnl)}`}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {/* Collapsible drawer: positions + order history */}
+      <section className="rounded-xl border border-border bg-surface">
+        <button
+          onClick={() => setDrawerOpen((o) => !o)}
+          className="flex w-full items-center justify-between gap-2 px-5 py-3 text-sm font-semibold hover:bg-surface-2/40"
+        >
+          <span className="flex items-center gap-2">
+            <Chevron open={drawerOpen} />
+            Posiciones e historial
+          </span>
+          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-normal text-muted">
+            {detail?.positions.length ?? 0} abiertas · {orders.length} órdenes
+          </span>
+        </button>
+
+        {drawerOpen && (
+          <div className="space-y-5 border-t border-border p-5">
+            {/* Positions */}
+            <div>
+              <h3 className="mb-3 text-xs uppercase tracking-wide text-muted">Posiciones</h3>
+              {!detail || detail.positions.length === 0 ? (
+                <p className="text-sm text-muted">Sin posiciones abiertas.</p>
+              ) : (
+                <div className="overflow-auto rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-surface-2 text-[11px] uppercase tracking-wide text-muted">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium">Símbolo</th>
+                        <th className="px-3 py-2 text-right font-medium">Cantidad</th>
+                        <th className="px-3 py-2 text-right font-medium">Precio prom.</th>
+                        <th className="px-3 py-2 text-right font-medium">Actual</th>
+                        <th className="px-3 py-2 text-right font-medium">Valor</th>
+                        <th className="px-3 py-2 text-right font-medium">P&amp;L no real.</th>
+                      </tr>
+                    </thead>
+                    <tbody className="nums">
+                      {detail.positions.map((p) => {
+                        const cur = prices[p.symbol];
+                        const pnl = cur ? p.qty * (cur - p.avg_price) : null;
+                        return (
+                          <tr key={p.symbol} className="border-t border-border">
+                            <td className="px-3 py-1.5 text-left">{p.symbol}</td>
+                            <td className="px-3 py-1.5 text-right">{p.qty}</td>
+                            <td className="px-3 py-1.5 text-right">${money(p.avg_price)}</td>
+                            <td className="px-3 py-1.5 text-right">{cur ? `$${money(cur)}` : "…"}</td>
+                            <td className="px-3 py-1.5 text-right">${money(p.qty * (cur ?? p.avg_price))}</td>
+                            <td className={`px-3 py-1.5 text-right ${pnl === null ? "text-muted" : pnl >= 0 ? "text-pos" : "text-neg"}`}>
+                              {pnl === null ? "—" : `${pnl >= 0 ? "+" : ""}$${money(pnl)}`}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Order history */}
+            <div>
+              <h3 className="mb-3 text-xs uppercase tracking-wide text-muted">Historial de órdenes</h3>
+              {orders.length === 0 ? (
+                <p className="text-sm text-muted">Aún no operas.</p>
+              ) : (
+                <div className="overflow-auto rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-surface-2 text-[11px] uppercase tracking-wide text-muted">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium">Fecha</th>
+                        <th className="px-3 py-2 text-left font-medium">Lado</th>
+                        <th className="px-3 py-2 text-left font-medium">Símbolo</th>
+                        <th className="px-3 py-2 text-right font-medium">Cantidad</th>
+                        <th className="px-3 py-2 text-right font-medium">Precio</th>
+                      </tr>
+                    </thead>
+                    <tbody className="nums">
+                      {orders.map((o) => (
+                        <tr key={o.id} className="border-t border-border">
+                          <td className="px-3 py-1.5 text-left text-muted">{new Date(o.created_at).toLocaleString()}</td>
+                          <td className={`px-3 py-1.5 text-left ${o.side === "buy" ? "text-pos" : "text-neg"}`}>
+                            {o.side === "buy" ? "Compra" : "Venta"}
+                          </td>
+                          <td className="px-3 py-1.5 text-left">{o.symbol}</td>
+                          <td className="px-3 py-1.5 text-right">{o.qty}</td>
+                          <td className="px-3 py-1.5 text-right">${money(o.price)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>
-
-      {/* Order history */}
-      {orders.length > 0 && (
-        <section className="rounded-xl border border-border bg-surface p-5">
-          <h2 className="mb-3 text-sm font-semibold">Historial de órdenes</h2>
-          <div className="overflow-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-surface-2 text-[11px] uppercase tracking-wide text-muted">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium">Fecha</th>
-                  <th className="px-3 py-2 text-left font-medium">Lado</th>
-                  <th className="px-3 py-2 text-left font-medium">Símbolo</th>
-                  <th className="px-3 py-2 text-right font-medium">Cantidad</th>
-                  <th className="px-3 py-2 text-right font-medium">Precio</th>
-                </tr>
-              </thead>
-              <tbody className="nums">
-                {orders.map((o) => (
-                  <tr key={o.id} className="border-t border-border">
-                    <td className="px-3 py-1.5 text-left text-muted">{new Date(o.created_at).toLocaleString()}</td>
-                    <td className={`px-3 py-1.5 text-left ${o.side === "buy" ? "text-pos" : "text-neg"}`}>
-                      {o.side === "buy" ? "Compra" : "Venta"}
-                    </td>
-                    <td className="px-3 py-1.5 text-left">{o.symbol}</td>
-                    <td className="px-3 py-1.5 text-right">{o.qty}</td>
-                    <td className="px-3 py-1.5 text-right">${money(o.price)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
 
       <p className="text-xs text-muted">
         Solo simulación · precios reales de Binance, órdenes ficticias · no es asesoría financiera.
       </p>
     </div>
+  );
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      className={`h-4 w-4 text-muted transition-transform ${open ? "rotate-90" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M7 5l6 5-6 5" />
+    </svg>
   );
 }
 

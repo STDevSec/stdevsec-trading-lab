@@ -11,7 +11,15 @@ const INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
  * The last candle's close follows the live price polled by the parent, so the
  * chart ticks without refetching the whole series.
  */
-export default function LiveChart({ symbol, livePrice }: { symbol: string; livePrice?: number }) {
+export default function LiveChart({
+  symbol,
+  livePrice,
+  height = 320,
+}: {
+  symbol: string;
+  livePrice?: number;
+  height?: number;
+}) {
   const el = useRef<HTMLDivElement>(null);
   const series = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const last = useRef<OhlcvCandle | null>(null);
@@ -23,7 +31,7 @@ export default function LiveChart({ symbol, livePrice }: { symbol: string; liveP
     const node = el.current;
     if (!node) return;
     const chart = createChart(node, {
-      height: 320,
+      height,
       autoSize: true,
       layout: { background: { color: "transparent" }, textColor: "#7d8aa0" },
       grid: {
@@ -67,7 +75,7 @@ export default function LiveChart({ symbol, livePrice }: { symbol: string; liveP
       last.current = null;
       chart.remove();
     };
-  }, [symbol, interval]);
+  }, [symbol, interval, height]);
 
   // Live tick: move the last candle's close (and high/low) to the current price.
   useEffect(() => {
