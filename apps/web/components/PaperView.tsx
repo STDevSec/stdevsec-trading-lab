@@ -7,6 +7,7 @@ import {
   type PaperAccountDetail,
   type PaperOrder,
 } from "@/lib/api";
+import LiveChart from "./LiveChart";
 
 const SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
 const INPUT =
@@ -147,6 +148,12 @@ export default function PaperView() {
         <Stat label="Efectivo" value={`$${money(detail?.cash ?? 0)}`} />
         <Stat label="En posiciones" value={`$${money(positionsValue)}`} />
         <Stat label="Posiciones" value={String(detail?.positions.length ?? 0)} />
+      </section>
+
+      {/* Live chart */}
+      <section className="rounded-xl border border-border bg-surface p-5">
+        <h2 className="mb-3 text-sm font-semibold">{symbol} · en vivo</h2>
+        <LiveChart symbol={symbol} livePrice={livePrice} />
       </section>
 
       {/* Trade panel */}

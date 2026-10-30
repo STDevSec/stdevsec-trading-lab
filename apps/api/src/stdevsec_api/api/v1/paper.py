@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from stdevsec_api.api.v1.deps import Pagination, pagination
 from stdevsec_api.db.session import get_db
 from stdevsec_api.schemas import (
+    OhlcvCandle,
     Page,
     PaperAccountCreate,
     PaperAccountDetailOut,
@@ -27,6 +28,16 @@ def get_price(symbol: str = Query(..., min_length=2, max_length=20)) -> PriceOut
     """Live spot price from Binance (public, no key). Simulation only."""
     sym = market.validate_symbol(symbol)
     return PriceOut(symbol=sym, price=market.fetch_price(sym))
+
+
+@router.get("/klines", response_model=list[OhlcvCandle])
+def get_klines(
+    symbol: str = Query(..., min_length=2, max_length=20),
+    interval: str = Query("1m"),
+    limit: int = Query(200, ge=1, le=500),
+) -> list[OhlcvCandle]:
+    """Recent candles for the live chart (Binance public, no key). Simulation only."""
+    return [OhlcvCandle.model_validate(c) for c in market.fetch_klines(symbol, interval, limit)]
 
 
 @router.post("/accounts", response_model=PaperAccountOut, status_code=status.HTTP_201_CREATED)

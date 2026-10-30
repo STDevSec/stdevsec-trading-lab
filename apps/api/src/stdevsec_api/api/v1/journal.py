@@ -11,6 +11,7 @@ from stdevsec_api.schemas import (
     JournalEntryCreate,
     JournalEntryDetailOut,
     JournalEntryOut,
+    JournalEntryUpdate,
     JournalImageOut,
     Page,
 )
@@ -40,6 +41,13 @@ def list_entries(
 @router.get("/entries/{entry_id}", response_model=JournalEntryDetailOut)
 def get_entry(entry_id: str, db: Session = Depends(get_db)) -> JournalEntryDetailOut:
     return JournalEntryDetailOut.model_validate(svc.get_entry(db, entry_id))
+
+
+@router.patch("/entries/{entry_id}", response_model=JournalEntryOut)
+def update_entry(
+    entry_id: str, payload: JournalEntryUpdate, db: Session = Depends(get_db)
+) -> JournalEntryOut:
+    return JournalEntryOut.model_validate(svc.update_entry(db, entry_id, payload))
 
 
 @router.delete("/entries/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)

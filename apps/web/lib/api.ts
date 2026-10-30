@@ -190,6 +190,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  updateJournalEntry: (id: string, payload: { notes?: string; tags?: string[] }) =>
+    call(`/api/v1/journal/entries/${id}`, JournalEntrySchema, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
   uploadJournalImage: (entryId: string, form: FormData) =>
     upload(`/api/v1/journal/entries/${entryId}/images`, form, JournalImageSchema),
   deleteJournalEntry: async (id: string) => {
@@ -217,6 +222,11 @@ export const api = {
     call(`/api/v1/paper/accounts/${accountId}/orders?limit=100`, page(PaperOrderSchema)),
   paperPrice: (symbol: string) =>
     call(`/api/v1/paper/price?symbol=${encodeURIComponent(symbol)}`, PriceSchema),
+  paperKlines: (symbol: string, interval = "1m") =>
+    call(
+      `/api/v1/paper/klines?symbol=${encodeURIComponent(symbol)}&interval=${interval}&limit=200`,
+      z.array(OhlcvCandleSchema),
+    ),
 };
 
 /**

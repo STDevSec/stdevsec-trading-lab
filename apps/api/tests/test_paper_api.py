@@ -76,3 +76,42 @@ def test_price_endpoint_uses_market(client: TestClient, monkeypatch: pytest.Monk
 def test_price_invalid_symbol(client: TestClient) -> None:
     r = client.get("/api/v1/paper/price", params={"symbol": "bad!!"})
     assert r.status_code == 422
+
+
+def test_order_creates_journal_entry(client: TestClient) -> None:
+    acc = _account(client, 10_000.0)
+    _order(client, acc, "buy", 0.1, 50_000.0)
+    entries = client.get("/api/v1/journal/entries").json()["items"]
+    assert len(entries) == 1
+    assert "BTCUSDT" in entries[0]["title"]
+    assert "paper" in entries[0]["tags"]
+
+
+def test_sell_entry_has_realized_pnl(client: TestClient) -> None:
+    acc = _account(client, 10_000.0)
+    _order(client, acc, "buy", 0.1, 50_000.0)
+    _order(client, acc, "sell", 0.1, 60_000.0)  # +1000 realized
+    titles = [e["title"] for e in client.get("/api/v1/journal/entries").json()["items"]]
+    assert any("P&L +1,000" in t for t in titles)
+
+
+def test_journal_patch_notes_and_tags(client: TestClient) -> None:
+    created = client.post(
+        "/api/v1/journal/entries", json={"title": "Idea", "tags": ["paper"]}
+    ).json()
+    r = client.patch(
+        f"/api/v1/journal/entries/{created['id']}",
+        json={"notes": "salí tarde", "tags": ["paper", "ganada"]},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["notes"] == "salí tarde"
+    assert body["tags"] == ["paper", "ganada"]
+
+
+def test_klines_endpoint_uses_market(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    sample = [{"time": 1, "open": 1.0, "high": 2.0, "low": 0.5, "close": 1.5, "volume": 10.0}]
+    monkeypatch.setattr(market, "fetch_klines", lambda s, i, n: sample)
+    r = client.get("/api/v1/paper/klines", params={"symbol": "btcusdt", "interval": "1m"})
+    assert r.status_code == 200
+    assert r.json() == sample

@@ -176,6 +176,13 @@ class JournalEntryCreate(BaseModel):
     run_id: str | None = None
 
 
+class JournalEntryUpdate(BaseModel):
+    """Partial edit of an entry (comment + win/loss tag). Unset fields untouched."""
+
+    notes: str | None = Field(default=None, max_length=20_000)
+    tags: list[str] | None = None
+
+
 class JournalImageOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

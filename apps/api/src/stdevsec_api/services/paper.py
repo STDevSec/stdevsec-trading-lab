@@ -9,7 +9,7 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from stdevsec_api.db.models import PaperAccount, PaperOrder, PaperPosition
+from stdevsec_api.db.models import JournalEntry, PaperAccount, PaperOrder, PaperPosition
 from stdevsec_api.errors import DomainValidationError, NotFoundError
 from stdevsec_api.schemas import PaperAccountCreate, PaperOrderCreate
 from stdevsec_api.services.market import validate_symbol
@@ -64,21 +64,26 @@ def place_order(db: Session, account_id: str, payload: PaperOrderCreate) -> Pape
             new_qty = pos.qty + qty
             pos.avg_price = (pos.qty * pos.avg_price + qty * price) / new_qty
             pos.qty = new_qty
+        title = f"Compra {qty:g} {symbol} · ${cost:,.2f}"
     else:  # sell
         if pos is None or qty > pos.qty + _EPS:
             raise DomainValidationError(
                 "Posición insuficiente para vender",
                 details={"held": pos.qty if pos else 0.0, "requested": qty},
             )
+        realized = qty * (price - pos.avg_price)  # avg unchanged by a sell
         account.cash += qty * price
         pos.qty -= qty
         if pos.qty <= _EPS:
             account.positions.remove(pos)  # flat -> drop the row
+        title = f"Venta {qty:g} {symbol} · ${qty * price:,.2f} · P&L {realized:+,.2f}"
 
     order = PaperOrder(
         account_id=account.id, symbol=symbol, side=payload.side, qty=qty, price=price
     )
     db.add(order)
+    # Auto-bitácora: cada orden deja su entrada en el diario para analizarla luego.
+    db.add(JournalEntry(title=title, tags=["paper", symbol]))
     db.commit()
     db.refresh(order)
     return order

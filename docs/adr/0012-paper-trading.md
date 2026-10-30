@@ -23,8 +23,14 @@ de un jalón), el paper trading avanza en tiempo real.
 - **Modelos** `PaperAccount` (efectivo) / `PaperPosition` (neta por símbolo) /
   `PaperOrder` (histórico). Migración Alembic.
 - **Frontend**: vista *Paper trading* (sale de "pronto", cierra el backlog).
-  Precio en vivo (poll cada 5 s), panel de compra/venta, posiciones con valor y
-  P&L no realizado, equity total e historial.
+  Precio en vivo (poll cada 5 s), **gráfica de velas en vivo** (klines de
+  Binance vía `GET /paper/klines`, la última vela sigue el precio en vivo),
+  panel de compra/venta, posiciones con valor y P&L no realizado, equity total
+  e historial.
+- **Cada orden deja su entrada en el diario** (misma transacción): título con
+  lado + instrumento + monto, y P&L realizado en las ventas; etiqueta `paper`.
+  En el diario se puede comentar y marcar **ganada/perdida** (tag reservado, vía
+  `PATCH /journal/entries/{id}`), sin columna nueva, para analizar y afinar.
 
 ## Consecuencias
 - Depende de que Binance sea alcanzable desde el backend; si no, el precio falla
