@@ -38,8 +38,16 @@ Dominio (`/api/v1`):
 | POST | `/journal/entries` | Crea entrada del diario (título, notas, tags) |
 | GET | `/journal/entries` | Lista paginada de entradas |
 | GET | `/journal/entries/{id}` | Detalle + capturas adjuntas |
+| PATCH | `/journal/entries/{id}` | Edita comentario/etiquetas (marca ganada/perdida) |
 | DELETE | `/journal/entries/{id}` | Elimina la entrada (y sus capturas) |
 | POST | `/journal/entries/{id}/images` | Adjunta una captura (multipart, solo imágenes) |
 | GET | `/journal/entries/{id}/images/{img}` | Sirve los bytes de la captura |
+| GET | `/paper/price?symbol=` | Precio spot en vivo (Binance, sin API key) |
+| GET | `/paper/klines?symbol=&interval=` | Velas recientes para la gráfica en vivo (Binance) |
+| POST | `/paper/accounts` | Crea cuenta de paper trading (simulada) |
+| GET | `/paper/accounts` | Lista de cuentas |
+| GET | `/paper/accounts/{id}` | Detalle (efectivo + posiciones) |
+| POST | `/paper/accounts/{id}/orders` | Ejecuta orden simulada (buy/sell al precio dado) |
+| GET | `/paper/accounts/{id}/orders` | Historial de órdenes |
 
 Errores con envelope único: `{"error": {"code", "message", "details"}}`.

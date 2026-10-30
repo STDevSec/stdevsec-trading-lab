@@ -16,6 +16,7 @@ import {
 import AppShell, { type ViewId } from "@/components/AppShell";
 import EquityChart from "@/components/EquityChart";
 import JournalView from "@/components/JournalView";
+import PaperView from "@/components/PaperView";
 import PriceChart from "@/components/PriceChart";
 import RunsView from "@/components/RunsView";
 import TradesTable from "@/components/TradesTable";
@@ -197,6 +198,8 @@ export default function TradingLab() {
         <RunsView onSelect={openRun} />
       ) : view === "journal" ? (
         <JournalView />
+      ) : view === "paper" ? (
+        <PaperView />
       ) : (
         <div className="mx-auto max-w-5xl space-y-5">
           {/* Dataset */}

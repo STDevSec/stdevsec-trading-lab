@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from stdevsec_api.config import get_settings
 from stdevsec_api.db.models import JournalEntry, JournalImage
 from stdevsec_api.errors import DomainValidationError, NotFoundError, PayloadTooLargeError
-from stdevsec_api.schemas import JournalEntryCreate
+from stdevsec_api.schemas import JournalEntryCreate, JournalEntryUpdate
 
 
 def create_entry(db: Session, payload: JournalEntryCreate) -> JournalEntry:
@@ -36,6 +36,17 @@ def get_entry(db: Session, entry_id: str) -> JournalEntry:
     entry = db.get(JournalEntry, entry_id)
     if entry is None:
         raise NotFoundError(f"Journal entry '{entry_id}' not found")
+    return entry
+
+
+def update_entry(db: Session, entry_id: str, payload: JournalEntryUpdate) -> JournalEntry:
+    entry = get_entry(db, entry_id)
+    if payload.notes is not None:
+        entry.notes = payload.notes
+    if payload.tags is not None:
+        entry.tags = [t.strip() for t in payload.tags if t.strip()]
+    db.commit()
+    db.refresh(entry)
     return entry
 
 

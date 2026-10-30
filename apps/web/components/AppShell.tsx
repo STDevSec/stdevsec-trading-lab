@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-export type ViewId = "backtest" | "runs" | "journal";
+export type ViewId = "backtest" | "runs" | "journal" | "paper";
 
 type NavItem = { id: ViewId; label: string; icon: ReactNode };
 type SoonItem = { label: string; icon: ReactNode };
@@ -35,13 +35,15 @@ const NAV: NavItem[] = [
   { id: "backtest", label: "Backtest", icon: icon(I.flask) },
   { id: "runs", label: "Corridas", icon: icon(I.list) },
   { id: "journal", label: "Diario", icon: icon(I.book) },
+  { id: "paper", label: "Paper trading", icon: icon(I.activity) },
 ];
-const SOON: SoonItem[] = [{ label: "Paper trading", icon: icon(I.activity) }];
+const SOON: SoonItem[] = [];
 
 const TITLES: Record<ViewId, string> = {
   backtest: "Nuevo backtest",
   runs: "Corridas",
   journal: "Diario de trading",
+  paper: "Paper trading",
 };
 
 export default function AppShell({
@@ -88,9 +90,11 @@ export default function AppShell({
             );
           })}
 
-          <div className="px-3 pb-1 pt-4 text-[10px] uppercase tracking-wide text-muted/70">
-            Próximamente
-          </div>
+          {SOON.length > 0 && (
+            <div className="px-3 pb-1 pt-4 text-[10px] uppercase tracking-wide text-muted/70">
+              Próximamente
+            </div>
+          )}
           {SOON.map((item) => (
             <div
               key={item.label}

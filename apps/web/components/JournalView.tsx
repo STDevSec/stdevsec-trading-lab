@@ -8,6 +8,12 @@ const INPUT =
 
 const dt = (s: string) => new Date(s).toLocaleString();
 
+// Win/loss lives as a reserved tag so no schema change is needed.
+const OUTCOMES = ["ganada", "perdida"] as const;
+type Outcome = (typeof OUTCOMES)[number];
+const outcomeOf = (tags: string[]): Outcome | null =>
+  (OUTCOMES.find((o) => tags.includes(o)) as Outcome | undefined) ?? null;
+
 export default function JournalView() {
   const [entries, setEntries] = useState<JournalDetail[] | null>(null);
   const [title, setTitle] = useState("");
@@ -17,6 +23,8 @@ export default function JournalView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,6 +66,36 @@ export default function JournalView() {
       await load();
     } catch (e) {
       setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveNotes(id: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.updateJournalEntry(id, { notes: draft });
+      setEditId(null);
+      await load();
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Toggle the win/loss mark; clicking the active one clears it.
+  async function setOutcome(e: JournalDetail, o: Outcome) {
+    setBusy(true);
+    setError(null);
+    try {
+      const rest = e.tags.filter((t) => !OUTCOMES.includes(t as Outcome));
+      const tags = outcomeOf(e.tags) === o ? rest : [...rest, o];
+      await api.updateJournalEntry(e.id, { tags });
+      await load();
+    } catch (err) {
+      setError(String(err));
     } finally {
       setBusy(false);
     }
@@ -138,7 +176,15 @@ export default function JournalView() {
           <article key={e.id} className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-medium">{e.title}</h3>
+                <h3 className="flex items-center gap-2 font-medium">
+                  {e.title}
+                  {outcomeOf(e.tags) === "ganada" && (
+                    <span className="rounded-full bg-pos/15 px-2 py-0.5 text-xs text-pos">ganada</span>
+                  )}
+                  {outcomeOf(e.tags) === "perdida" && (
+                    <span className="rounded-full bg-neg/15 px-2 py-0.5 text-xs text-neg">perdida</span>
+                  )}
+                </h3>
                 <div className="text-xs text-muted">{dt(e.created_at)}</div>
               </div>
               {confirmId === e.id ? (
@@ -161,18 +207,81 @@ export default function JournalView() {
               )}
             </div>
 
-            {e.notes && <p className="mt-2 whitespace-pre-wrap text-sm text-fg/90">{e.notes}</p>}
-
-            {e.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {e.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-xs text-muted"
+            {editId === e.id ? (
+              <div className="mt-2">
+                <textarea
+                  value={draft}
+                  onChange={(ev) => setDraft(ev.target.value)}
+                  rows={4}
+                  placeholder="Comentario: por qué entraste/saliste, qué salió bien o mal…"
+                  className={`${INPUT} w-full resize-y`}
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => saveNotes(e.id)}
+                    disabled={busy}
+                    className="rounded bg-accent px-3 py-1 text-xs font-medium text-white hover:brightness-110 disabled:opacity-50"
                   >
-                    {t}
-                  </span>
-                ))}
+                    Guardar
+                  </button>
+                  <button onClick={() => setEditId(null)} className="text-xs text-muted hover:text-fg">
+                    cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              e.notes && <p className="mt-2 whitespace-pre-wrap text-sm text-fg/90">{e.notes}</p>
+            )}
+
+            {/* Analysis controls: comment + win/loss */}
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              {editId !== e.id && (
+                <button
+                  onClick={() => {
+                    setEditId(e.id);
+                    setDraft(e.notes);
+                  }}
+                  className="rounded border border-border bg-surface-2 px-2 py-1 text-muted hover:text-fg"
+                >
+                  {e.notes ? "editar comentario" : "comentar"}
+                </button>
+              )}
+              <button
+                onClick={() => setOutcome(e, "ganada")}
+                disabled={busy}
+                className={`rounded border px-2 py-1 ${
+                  outcomeOf(e.tags) === "ganada"
+                    ? "border-pos/50 bg-pos/15 text-pos"
+                    : "border-border bg-surface-2 text-muted hover:text-pos"
+                }`}
+              >
+                👍 ganada
+              </button>
+              <button
+                onClick={() => setOutcome(e, "perdida")}
+                disabled={busy}
+                className={`rounded border px-2 py-1 ${
+                  outcomeOf(e.tags) === "perdida"
+                    ? "border-neg/50 bg-neg/15 text-neg"
+                    : "border-border bg-surface-2 text-muted hover:text-neg"
+                }`}
+              >
+                👎 perdida
+              </button>
+            </div>
+
+            {e.tags.filter((t) => !OUTCOMES.includes(t as Outcome)).length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {e.tags
+                  .filter((t) => !OUTCOMES.includes(t as Outcome))
+                  .map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-xs text-muted"
+                    >
+                      {t}
+                    </span>
+                  ))}
               </div>
             )}
 
